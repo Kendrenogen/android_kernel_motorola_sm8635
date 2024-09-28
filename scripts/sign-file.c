@@ -27,6 +27,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#ifndef OPENSSL_IS_BORINGSSL
 #if OPENSSL_VERSION_MAJOR >= 3
 # define USE_PKCS11_PROVIDER
 # include <openssl/provider.h>
@@ -36,6 +37,7 @@
 #  define USE_PKCS11_ENGINE
 #  include <openssl/engine.h>
 # endif
+#endif
 #endif
 #include "ssl-common.h"
 
@@ -107,6 +109,7 @@ static int pem_pw_cb(char *buf, int len, int w, void *v)
 	return pwlen;
 }
 
+#ifndef OPENSSL_IS_BORINGSSL
 static EVP_PKEY *read_private_key_pkcs11(const char *private_key_name)
 {
 	EVP_PKEY *private_key = NULL;
@@ -158,11 +161,17 @@ static EVP_PKEY *read_private_key_pkcs11(const char *private_key_name)
 #endif
 	return private_key;
 }
+#endif
 
 static EVP_PKEY *read_private_key(const char *private_key_name)
 {
 	if (!strncmp(private_key_name, "pkcs11:", 7)) {
+#ifdef OPENSSL_IS_BORINGSSL
+		ERR(1, "BoringSSL does not support reading PKCS#11 private key");
+		exit(1);
+#else
 		return read_private_key_pkcs11(private_key_name);
+#endif
 	} else {
 		EVP_PKEY *private_key;
 		BIO *b;

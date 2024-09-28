@@ -21,6 +21,7 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#ifndef OPENSSL_IS_BORINGSSL
 #if OPENSSL_VERSION_MAJOR >= 3
 # define USE_PKCS11_PROVIDER
 # include <openssl/provider.h>
@@ -30,6 +31,7 @@
 #  define USE_PKCS11_ENGINE
 #  include <openssl/engine.h>
 # endif
+#endif
 #endif
 #include "ssl-common.h"
 
@@ -62,6 +64,7 @@ static void write_cert(X509 *x509)
 		fprintf(stderr, "Extracted cert: %s\n", buf);
 }
 
+#ifndef OPENSSL_IS_BORINGSSL
 static X509 *load_cert_pkcs11(const char *cert_src)
 {
 	X509 *cert = NULL;
@@ -121,6 +124,7 @@ static X509 *load_cert_pkcs11(const char *cert_src)
 #endif
 	return cert;
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -150,10 +154,15 @@ int main(int argc, char **argv)
 		fclose(f);
 		exit(0);
 	} else if (!strncmp(cert_src, "pkcs11:", 7)) {
+#ifdef OPENSSL_IS_BORINGSSL
+		ERR(1, "BoringSSL does not support extracting from PKCS#11");
+		exit(1);
+#else
 		X509 *cert = load_cert_pkcs11(cert_src);
 
 		ERR(!cert, "load_cert_pkcs11 failed");
 		write_cert(cert);
+#endif
 	} else {
 		BIO *b;
 		X509 *x509;
