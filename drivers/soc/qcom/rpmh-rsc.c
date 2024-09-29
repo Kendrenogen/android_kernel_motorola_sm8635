@@ -77,15 +77,8 @@
 #define CH_CLEAR_STATUS			BIT(31)
 
 #define ACCL_TYPE(addr)			((addr >> 16) & 0xF)
-#define VREG_ADDR(addr)			(addr & ~0xF)
-
+#define NR_ACCL_TYPES			3
 #define MAX_RSC_COUNT			5
-
-enum {
-	HW_ACCL_CLK = 0x3,
-	HW_ACCL_VREG,
-	HW_ACCL_BUS,
-};
 
 static const char * const accl_str[] = {
 	"", "", "", "CLK", "VREG", "BUS",
@@ -672,7 +665,6 @@ static int check_for_req_inflight(struct rsc_drv *drv, struct tcs_group *tcs,
 	u32 addr;
 	int j, k;
 	int i = tcs->offset;
-	unsigned long accl;
 
 	for_each_set_bit_from(i, drv->tcs_in_use, tcs->offset + tcs->num_tcs) {
 		curr_enabled = read_tcs_reg(drv, drv->regs[RSC_DRV_CMD_ENABLE], i);
@@ -680,16 +672,7 @@ static int check_for_req_inflight(struct rsc_drv *drv, struct tcs_group *tcs,
 		for_each_set_bit(j, &curr_enabled, tcs->ncpt) {
 			addr = read_tcs_cmd(drv, drv->regs[RSC_DRV_CMD_ADDR], i, j);
 			for (k = 0; k < msg->num_cmds; k++) {
-			/*
-			 * Each RPMh VREG accelerator resource has 3 or 4 contiguous 4-byte
-			 * aligned addresses associated with it. Ignore the offset to check
-			 * for in-flight VREG requests.
-			 */
-				accl = ACCL_TYPE(msg->cmds[k].addr);
-				if (accl == HW_ACCL_VREG &&
-				    VREG_ADDR(addr) == VREG_ADDR(msg->cmds[k].addr))
-					return -EBUSY;
-				else if (addr == msg->cmds[k].addr)
+				if (addr == msg->cmds[k].addr)
 					return -EBUSY;
 			}
 		}
@@ -835,16 +818,7 @@ int rpmh_rsc_send_data(struct rsc_drv *drv, const struct tcs_request *msg, int c
 	 */
 	__tcs_buffer_write(drv, tcs_id, 0, msg);
 	__tcs_set_trigger(drv, tcs_id, true);
-	ipc_log_string(drv->ipc_log_ctx, "TCS trigger: m=%d wait_for_compl=%u",
-		       tcs_id, msg->wait_for_compl);
-
-	if (!msg->wait_for_compl)
-		clear_bit(tcs_id, drv->tcs_in_use);
-
-	spin_unlock_irqrestore(&drv->lock, flags);
-
-	if (!msg->wait_for_compl)
-		wake_up(&drv->tcs_wait);
+	ipc_log_string(drv->ipc_log_ctx, "TCS trigger: m=%d", tcs_id);
 
 	return 0;
 }
