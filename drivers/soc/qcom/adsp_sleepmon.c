@@ -39,7 +39,7 @@
 #include <asm/arch_timer.h>
 #include <linux/jiffies.h>
 #include <linux/suspend.h>
-#include <../../remoteproc/qcom_common.h>
+#include "../../remoteproc/qcom_common.h"
 #include <uapi/misc/adsp_sleepmon.h>
 
 #define ADSPSLEEPMON_SMEM_ADSP_PID                              2
