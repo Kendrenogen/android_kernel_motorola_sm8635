@@ -37,7 +37,7 @@
  */
 
 #include <ufs/ufshcd.h>
-#include "../core/ufshcd-priv.h"
+#include "../../core/ufshcd-priv.h"
 #include "ufsfeature.h"
 #include "ufshid.h"
 

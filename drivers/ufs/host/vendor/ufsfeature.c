@@ -38,8 +38,8 @@
 
 #include "ufsfeature.h"
 #include <ufs/ufshcd.h>
-#include "../core/ufshcd-priv.h"
-#include "ufs-qcom.h"
+#include "../../core/ufshcd-priv.h"
+#include "../ufs-qcom.h"
 
 
 #if defined(CONFIG_SCSI_SKHID)

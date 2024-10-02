@@ -10,7 +10,7 @@
  */
 
 #include <ufs/ufshcd.h>
-#include "../core/ufshcd-priv.h"
+#include "../../core/ufshcd-priv.h"
 #include "ufsfeature.h"
 #include <trace/events/ufs.h>
 #include <trace/hooks/ufshcd.h>
